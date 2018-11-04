@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.cobrand.ct</groupId>
+	<artifactId>com-cobrand-ct-acceptance-tests</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>com-cobrand-ct-acceptance-tests</name>
+	<description>Demo project for Spring Boot</description>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.0.6.RELEASE</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+
+	<properties>
+		<serenity.version>1.9.16</serenity.version>
+		<serenity.maven.version>1.8.1</serenity.maven.version>
+		<serenity.cucumber.version>1.9.7</serenity.cucumber.version>
+		<merch-bdd-pnr-common.version>0.12-RELEASE</merch-bdd-pnr-common.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+	</properties>
+	<repositories>
+		<repository>
+			<id>aa-nexus</id>
+			<name>AA Nexus</name>
+			<url>http://nxrepo.qcorpaa.aa.com:8081/nexus/content/groups/public</url>
+		</repository>
+		<repository>
+			<id>aa-ct-fly-snapshots</id>
+			<name>AA Customer Technology Fly Maven Snapshots</name>
+			<url>http://nxrepo.qcorpaa.aa.com:8081/nexus/content/repositories/AA-CustTech-Fly-snapshots</url>
+		</repository>
+		<repository>
+			<id>aa-ct-fly-releases</id>
+			<name>AA Customer Technology Fly Maven Releases</name>
+			<url>http://nxrepo.qcorpaa.aa.com:8081/nexus/content/repositories/AA-CustTech-Fly-releases</url>
+		</repository>
+	</repositories>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>net.serenity-bdd</groupId>
+			<artifactId>serenity-core</artifactId>
+			<version>${serenity.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.serenity-bdd</groupId>
+			<artifactId>serenity-rest-assured</artifactId>
+			<version>${serenity.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.serenity-bdd</groupId>
+			<artifactId>serenity-cucumber</artifactId>
+			<version>${serenity.cucumber.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.serenity-bdd</groupId>
+			<artifactId>serenity-spring</artifactId>
+			<version>${serenity.cucumber.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.velocity</groupId>
+			<artifactId>velocity</artifactId>
+			<version>1.7</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context-support</artifactId>
+			<version>3.2.0.RELEASE</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core-java8</artifactId>
+			<version>1.0.0m1</version>
+		</dependency>
+		<dependency>
+			<groupId>aa.ct.fly</groupId>
+			<artifactId>merch-bdd-pnrgen-common</artifactId>
+			<version>${merch-bdd-pnr-common.version}</version>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.20.1</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>2.9.1</version>
+			</plugin>
+			<plugin>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>2.20.1</version>
+				<configuration>
+					<systemPropertyVariables>
+						<webdriver.base.url>${webdriver.driver}</webdriver.base.url>
+					</systemPropertyVariables>
+					<parallel>classes</parallel>
+					<threadCount>4</threadCount>
+					<perCoreThreadCount>true</perCoreThreadCount>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.2</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>net.serenity-bdd.maven.plugins</groupId>
+				<artifactId>serenity-maven-plugin</artifactId>
+				<version>${serenity.maven.version}</version>
+				<!--<configuration> <tags>${tags}</tags> </configuration> -->
+				<executions>
+					<execution>
+						<id>serenity-reports</id>
+						<phase>post-integration-test</phase>
+						<goals>
+							<goal>aggregate</goal>
+						</goals>
+					</execution>
+				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>net.serenity-bdd</groupId>
+						<artifactId>serenity-core</artifactId>
+						<version>${serenity.version}</version>
+					</dependency>
+					<dependency>
+						<groupId>${project.groupId}</groupId>
+						<artifactId>${project.artifactId}</artifactId>
+						<version>${project.version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+			<plugin>
+				<groupId>com.github.temyers</groupId>
+				<artifactId>cucumber-jvm-parallel-plugin</artifactId>
+				<version>4.2.0</version>
+				<executions>
+					<execution>
+						<id>generateRunners</id>
+						<phase>generate-test-sources</phase>
+						<goals>
+							<goal>generateRunners</goal>
+						</goals>
+						<configuration>
+							<!-- Mandatory -->
+							<!-- List of package names to scan for glue code. -->
+							<glue>
+								<package>planner.cucumber</package>
+							</glue>
+							<namingScheme>feature-title</namingScheme>
+							<parallelScheme>FEATURE</parallelScheme>
+							<customVmTemplate>src/test/resources/cucumber-serenity-runner.vm</customVmTemplate>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

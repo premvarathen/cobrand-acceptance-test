@@ -1,0 +1,80 @@
+PNRGEN
+CERT
+AAAHDQ
+SI5
+W*2A31CA3A45105012
+1@D+${flight.departingNoOfDaysFromToday}@${flight.origin}${flight.destination}
+#if(${flight.departTime} != "" )
+1*${flight.departTime}
+#end
+#if(${flight.carrier} != "" and ${flight.carrier} != "AA")
+1#${flight.carrier}
+#end
+0${passengers.size()}Y1OB
+#if(${corporate})
+-C/${passengers.size()}group
+#end
+#if(${flight.returnPlusNumberOfDays} != "" )
+1R#${flight.returnPlusNumberOfDays}
+    #if(${flight.returnTime} != "" )
+    1*${flight.returnTime}
+    #end
+0${passengers.size()}Y1OB
+#end
+#foreach($passenger in $passengers)
+  #if(${corporate})
+    #set ($paxno = 1 + $foreach.count)
+  #else
+    #set ($paxno = $foreach.count)
+  #end
+-${passenger.lastName}/${passenger.firstName}
+    #if(${flight.carrier} != "" and ${flight.carrier} != "AA")
+    3DOCS/DB/${passenger.dateOfBirth}/M/${passenger.lastName}/${passenger.firstName}-$paxno.1
+    #if(${passenger.countryOfResidence} != "")
+         4DOCA/R/${passenger.countryOfResidence}-$paxno.1
+         #end
+    #else
+    4DOCS/DB/${passenger.dateOfBirth}/M/${passenger.lastName}/${passenger.firstName}-$paxno.1
+    #if(${passenger.countryOfResidence} != "")
+         4DOCA/R/${passenger.countryOfResidence}-$paxno.1
+         #end
+    #end#end
+#if(${exitRowSeat})
+    4G1/E
+    #else
+    4GA/
+#end
+
+
+#foreach($passenger in $passengers)
+    #if(${corporate})
+        #set ($paxno = 1 + $foreach.count)
+    #else
+        #set ($paxno = $foreach.count)
+    #end
+    #if(${passenger.oneWorldCarrier} != "" and ${passenger.oneWorldCarrier} != "AA")
+        FF${passenger.oneWorldCarrier}${passenger.advantageNumber}/AA-$paxno.1
+    #else 
+        #if(${passenger.advantageNumber} != "")
+        FFAA${passenger.advantageNumber}-$paxno.1
+        #end
+    #end
+#end
+WPRQ
+6common services
+#if(${purchased})
+7TACXTM/
+#end
+PE#test\\@aa.com#
+9480-600-1298-c
+ER
+W-N/RON BOND#A/4139-WYCLIFF AVE#C/DALLAS TX#Z/75219
+#if(${purchased})
+5-TBM*BA4111111111111111#12/20#123
+5H-/T#DOC#VCR
+#else
+ER
+W#FCA
+#end
+ER
+*P6
