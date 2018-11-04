@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.ui.velocity.VelocityEngineUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,7 +22,6 @@ import com.cobrand.ct.action.CobrandAction;
 import com.cobrand.ct.action.PassengerAction;
 import com.cobrand.ct.service.CobrandService;
 import com.cobrand.ct.utils.ActionUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 @Controller
@@ -75,37 +73,12 @@ public class CobrandRestController {
     }
 	
 	@PostMapping("/createPNR")
-    public String createPNRSubmit(@ModelAttribute PnrDataForm pnrData, Model model) {
-		ReservationWrapper wrapper = new ReservationWrapper();
-		wrapper.setTestId("testId");
-		Passenger passenger = new Passenger();
-		passenger.setFirstName(pnrData.getFirstName());
-		passenger.setLastName(pnrData.getLastName());
-		passenger.setCarrier("AA");;
-		passenger.setCountryOfResidence(pnrData.getCountryOfResidence());
-		passenger.setDateOfBirth(pnrData.getDateOfBirth());
-		Flight flight = new Flight();
-		flight.setDestination(pnrData.getDestination());
-		flight.setOrigin(pnrData.getOrigin());
-		flight.setCarrier("AA");
-		flight.setDepartTime(10);
-		List<Passenger> passengers = new ArrayList<>(); 
-		passengers.add(passenger);
-		wrapper.setFlight(flight);
-		wrapper.setPassengers(passengers);
-		
-		/*ObjectMapper oMapper = new ObjectMapper();
-		Map<String, Object> map = oMapper.convertValue(wrapper, Map.class);
-		
-		String commands =VelocityEngineUtils.mergeTemplateIntoString(this.engine,
-				"cobrand_pnr_non_stop.vm", "UTF-8", map);
-		System.out.println(commands);*/
-		
-		String recordLocator = actionUtils.invokeWithRetry(() ->cobrandService.createPNR(wrapper),
+    public String createPNRSubmit(@RequestParam Map<String, String> formData, Model model) {
+		  List<Map<String, String>> reservationRawData = new ArrayList<>();
+		  reservationRawData.add(formData);
+		 String recordLocator = actionUtils.invokeWithRetry(() ->cobrandService.createPNR(reservationRawData),
 						SESSION_KEY_RETRY_PNR_COUNTER);
 				
-		//String recordLocator = actionUtils.invokeWithRetry(() -> passengerAction.createPNR(wrapper),
-		//		SESSION_KEY_RETRY_PNR_COUNTER);
 		  ResultWrapper result = new ResultWrapper();
 		  result.setRecordLocator(recordLocator);
 		  model.addAttribute("result", result);
@@ -116,12 +89,6 @@ public class CobrandRestController {
 	@PostMapping("/form")
 	public ModelAndView createPNR( @RequestParam Map<String, String> formData, ModelAndView mav,RedirectAttributes redirectAttributes) {
 		
-		// your code goes here
-		/*Reservation reservationRawData = new Reservation();
-		List<Map<String,String>> list = new ArrayList<>();
-		list.add(formData);
-		String recordLocator = actionUtils.invokeWithRetry(() -> passengerAction.passengerRequestsPNR(list),
-				SESSION_KEY_RETRY_PNR_COUNTER);*/
 		redirectAttributes.addFlashAttribute("msg", "Success");
 		mav.setViewName("infoResult");
 		mav.addObject("recordLocator", "pnrcreated123456767");

@@ -7,10 +7,10 @@
 <body>
     <h1>Form</h1>
     <form action="#" th:action="@{/createPNR}" th:object="${pnrData}" method="post">
-         <p>First Name: <input type="text" th:field="*{firstName}" value="Michael" /></p>
-         <p>Last Name: <input type="text" th:field="*{lastName}" value="Chang"/></p>
-         <p>Origin: <input type="text" th:field="*{origin}"   value="DFW" /></p>
-         <p>Destination: <input type="text" th:field="*{destination}" value="ORD" /></p>
+         <p>First Name: <input type="text" th:field="*{FirstName}" value="Michael" /></p>
+         <p>Last Name: <input type="text" th:field="*{LastName}" value="Chang"/></p>
+         <p>Origin: <input type="text" th:field="*{Origin}"   value="DFW" /></p>
+         <p>Destination: <input type="text" th:field="*{Destination}" value="ORD" /></p>
          <p>Advantage Number: <input type="number" th:field="*{advantageNumber}" /></p>
           <p>Date Of Birth: <input type="text" th:field="*{dateOfBirth}" value="10JAN1978"/></p>
           <p>Country of Residence: <input type="text" th:field="*{countryOfResidence}" value="US"/></p>

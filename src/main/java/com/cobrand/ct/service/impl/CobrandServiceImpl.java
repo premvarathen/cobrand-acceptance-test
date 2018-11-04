@@ -1,27 +1,39 @@
 package com.cobrand.ct.service.impl;
 
+import static com.cobrand.ct.config.AARestAssuredConfiguration.aaCobrandSpec;
+import static io.restassured.path.json.JsonPath.from;
 import static net.serenitybdd.rest.SerenityRest.rest;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.exception.MethodInvocationException;
+import org.apache.velocity.exception.ParseErrorException;
+import org.apache.velocity.exception.ResourceNotFoundException;
+import org.assertj.core.api.SoftAssertions;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.velocity.VelocityEngineUtils;
 
-import com.cobrand.ct.controller.ReservationWrapper;
-import com.cobrand.ct.sabre.CobrandSabrePnrCreationProvider;
+import com.cobrand.ct.domain.Reservation;
+import com.cobrand.ct.mapper.ReservationMapper;
+import com.cobrand.ct.sabre.VelocityTemplateDeterminer;
 import com.cobrand.ct.service.CobrandService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.cobrand.ct.utils.ActionUtils;
 
 import aa.ct.fly.bdd.pnr.compromisedException.PnrCouldNotBeCreated;
+import aa.ct.fly.bdd.pnr.compromisedException.SabreCommandsCouldNotBeCreated;
 import aa.ct.fly.bdd.pnr.config.AARestAssuredConfiguration;
 import aa.ct.fly.bdd.pnr.pnrcreation.PNRToolVersion;
 import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 
 @Service
@@ -31,15 +43,16 @@ public class CobrandServiceImpl implements CobrandService {
 	@Autowired
 	private VelocityEngine engine;
 	
+	@Autowired
+	private ActionUtils actionUtils;
 	@Override
-	public String createPNR(ReservationWrapper wrapper) {
+	public String createPNR( List<Map<String, String>> reservationRawData) {
 		// TODO Auto-generated method stub
+		 ReservationMapper reservationMapper = new ReservationMapper();
+		  Reservation reservation = reservationMapper.map(reservationRawData);
+		  
 		
-		ObjectMapper oMapper = new ObjectMapper();
-		Map<String, Object> map = oMapper.convertValue(wrapper, Map.class);
-		
-		String commands =VelocityEngineUtils.mergeTemplateIntoString(this.engine,
-				"cobrand_pnr_non_stop.vm", "UTF-8", map);
+		String commands  = generator(reservation);
 		 RequestSpecification spec = new AARestAssuredConfiguration().aaPnrSpec(PNRToolVersion.V1);
 		 String pnr = "";
 	        try {
@@ -101,4 +114,105 @@ public class CobrandServiceImpl implements CobrandService {
         return requestSpecification.post("sabrepnr/delete");
     }
 
-}
+    
+    public String generator(Reservation reservation) {
+
+        VelocityContext context = setVelocityContext(reservation);
+        Template template = getTemplate(reservation);
+
+        StringWriter sw = new StringWriter();
+        template.merge(context, sw);
+
+        return sw.toString();
+      }
+      
+     
+      
+
+      private VelocityContext setVelocityContext(Reservation reservation) {
+        VelocityContext context = new VelocityContext();
+        context.put("pnr", reservation);
+        return context;
+      }
+      
+      private Template getTemplate(Reservation reservation) {
+    	   VelocityTemplateDeterminer templateDeterminer = new VelocityTemplateDeterminer();
+
+    	    String templateFile = templateDeterminer.determine(reservation);
+    	    Template template;
+
+    	    try {
+    	      template = engine.getTemplate(templateFile);
+    	    }
+    	    catch(ResourceNotFoundException rnfe) {
+    	      LOGGER.error("couldn't find the template {}", templateFile);
+    	      throw new SabreCommandsCouldNotBeCreated("couldn't find the template " + templateFile);
+    	    }
+    	    catch(ParseErrorException pee) {
+    	      LOGGER.error("syntax error: problem parsing the template");
+    	      throw new SabreCommandsCouldNotBeCreated("syntax error: problem parsing the template");
+
+    	    }
+    	    catch(MethodInvocationException mie) {
+    	      LOGGER.error("something invoked in the template threw an exception");
+    	      throw new SabreCommandsCouldNotBeCreated("something invoked in the template threw an exception");
+
+    	    }
+    	    catch(Exception e) {
+    	      LOGGER.error(e.getMessage());
+    	      throw new SabreCommandsCouldNotBeCreated("something invoked in the template threw an exception");
+
+    	    }
+    	    return template;
+    	  }
+
+	@Override
+	public String getCobrandCitiAd(boolean isCheckinPath, String deviceType, String locale, String recordLocator) {
+		if (isCheckinPath) {
+            return getCobrandCitiContent(deviceType, locale, recordLocator);
+        }
+
+        return null;
+	}
+	  private String getCobrandCitiContent(String deviceType, String locale, String recordLocator) {
+
+	        Map<String, String> params = new HashMap<>();
+	        params.put("deviceType", deviceType);
+	        params.put("locale", locale);
+	        params.put("recordLocator", recordLocator);
+
+	        ValidatableResponse response = rest()
+	                .spec(aaCobrandSpec())
+	                .params(params)
+	                .log().all()
+	                .when()
+	                .get("/api")
+	                .then()
+	                .log().all();
+	       if(response==null)
+	       {
+	    	   return null;
+	       }
+	        actionUtils.verifyServiceAvailability(response);
+
+	        return response.extract().response().asString();
+	    }
+
+	@Override
+	public void validatesBagsProductEligible(ValidatableResponse response) {
+		 String responseAsString = response.extract().response().asString();
+	        List<Map<String, ?>> flightInfos = from(responseAsString).get("flightInfos");
+
+	        boolean anyFailedRules = flightInfos.stream().anyMatch(flightInfo -> (!((List<String>) flightInfo.get("failedRules")).isEmpty()));
+
+	        SoftAssertions assertions = new SoftAssertions();
+	        assertions
+	                .assertThat(anyFailedRules)
+	                .as("there was prepaid bags eligibility failed rules")
+	                .isEqualTo(false);
+	        assertions.assertAll();
+		
+	}
+	}
+
+

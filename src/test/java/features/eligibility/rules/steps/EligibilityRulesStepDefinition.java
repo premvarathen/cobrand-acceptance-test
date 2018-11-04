@@ -56,6 +56,8 @@ public class EligibilityRulesStepDefinition{
 		this.recordLocator = actionUtils.invokeWithRetry(() -> passengerAction.passengerRequestsPNR(reservationRawData),
 				SESSION_KEY_RETRY_PNR_COUNTER);
 		Serenity.setSessionVariable(SESSION_KEY_RECORD_LOCATOR).to(this.recordLocator);
+		
+		
 	}
 
 	@Given("^for the locale  \"([^\"]*)\" and deviceType as \"([^\"]*)\"$")
